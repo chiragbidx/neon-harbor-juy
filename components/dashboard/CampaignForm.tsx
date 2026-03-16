@@ -45,8 +45,16 @@ export function CampaignForm({
     const res = await action;
     if (res.ok) {
       onSuccess();
+      form.reset();
     } else {
-      toast.error("Error saving campaign");
+      const err = await res.json().catch(() => ({}));
+      toast.error(
+        err?.error?.name?.[0] ||
+          err?.error?.subject?.[0] ||
+          err?.error?.body?.[0] ||
+          err?.error?.message ||
+          "Error saving campaign"
+      );
     }
   }
 
