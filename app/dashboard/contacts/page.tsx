@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { getContacts } from "./actions";
 import { PlusCircle } from "lucide-react";
 import { ContactForm } from "@/components/dashboard/ContactForm";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 export default function ContactsPage() {
   const [open, setOpen] = useState(false);
