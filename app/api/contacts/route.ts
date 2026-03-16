@@ -1,0 +1,33 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getContacts, addContact } from "@/app/dashboard/contacts/actions";
+
+// GET: /api/contacts
+export async function GET(req: NextRequest) {
+  // Support filtering by ?filter=name&tag=tag1
+  const { searchParams } = req.nextUrl;
+  const filter = searchParams.get("filter") ?? "";
+  const tag = searchParams.get("tag") ?? "";
+
+  try {
+    const contacts = await getContacts({ filter, tag });
+    return NextResponse.json(contacts);
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message ?? "Internal Error" }, { status: 400 });
+  }
+}
+
+// POST: /api/contacts
+export async function POST(req: NextRequest) {
+  const data = await req.json();
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      formData.set(key, value.join(","));
+    } else {
+      formData.set(key, value);
+    }
+  });
+  const result = await addContact(formData);
+  if (result.success) return NextResponse.json(result);
+  return NextResponse.json({ error: result.error }, { status: 400 });
+}
