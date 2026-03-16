@@ -24,6 +24,19 @@ export async function POST(req: NextRequest) {
     formData.set(key, value);
   });
   const result = await addCampaign(formData);
-  if (result && result.success) return NextResponse.json({ ...result });
-  return NextResponse.json({ error: typeof result?.error === "object" ? { ...result.error } : result.error }, { status: 400 });
+
+  // Only send primitives/arrays via new response objects
+  if (result && result.success) {
+    return NextResponse.json({ success: true });
+  } else if (result && result.error) {
+    if (
+      typeof result.error === "string" ||
+      Array.isArray(result.error)
+    ) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+    return NextResponse.json({ error: { ...result.error } }, { status: 400 });
+  } else {
+    return NextResponse.json({ error: "Unknown error" }, { status: 400 });
+  }
 }
