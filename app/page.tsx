@@ -6,17 +6,14 @@ import { LayoutFeatureGridSection } from "../components/home/LayoutFeatureGridSe
 import { LayoutFooterSection } from "../components/home/LayoutFooterSection";
 import { LayoutHeroSection } from "../components/home/LayoutHeroSection";
 import { LayoutPricingSection } from "../components/home/LayoutPricingSection";
-import { LayoutServicesSection } from "../components/home/LayoutServicesSection";
 import { LayoutSponsorsSection } from "../components/home/LayoutSponsorsSection";
-import { LayoutTeamSection } from "../components/home/LayoutTeamSection";
+import { LayoutHowItWorksSection } from "../components/home/LayoutHowItWorksSection";
 import { LayoutTestimonialSection } from "../components/home/LayoutTestimonialSection";
 import { Navbar as LayoutNavbar } from "@/components/layout/navbar";
 import { getAuthSession } from "@/lib/auth/session";
 
 export default async function Home() {
   const session = await getAuthSession();
-  // Simple toggles so agents/users can hide sections without touching JSX.
-  // Use ONLY_SECTIONS (comma list) to whitelist, or HIDE_SECTIONS to blacklist.
   const only = (process.env.ONLY_SECTIONS ?? "")
     .split(",")
     .map((s) => s.trim().toLowerCase())
@@ -25,7 +22,7 @@ export default async function Home() {
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
-  const defaultHide: string[] = [];
+  const defaultHide: string[] = ["layout-team"];
   const whitelist = only.length ? new Set(only) : null;
   const hide = new Set(whitelist ? envHide : [...defaultHide, ...envHide]);
   const sections = [
@@ -33,12 +30,11 @@ export default async function Home() {
     ["layout-sponsors", <LayoutSponsorsSection key="layout-sponsors" />],
     ["layout-benefits", <LayoutBenefitsSection key="layout-benefits" />],
     ["layout-features", <LayoutFeatureGridSection key="layout-features" />],
-    ["layout-services", <LayoutServicesSection key="layout-services" />],
+    ["layout-how-it-works", <LayoutHowItWorksSection key="layout-how-it-works" />],
     ["layout-testimonials", <LayoutTestimonialSection key="layout-testimonials" />],
-    ["layout-team", <LayoutTeamSection key="layout-team" />],
     ["layout-pricing", <LayoutPricingSection key="layout-pricing" />],
-    ["layout-contact", <LayoutContactSection key="layout-contact" />],
     ["layout-faq", <LayoutFaqSection key="layout-faq" />],
+    ["layout-contact", <LayoutContactSection key="layout-contact" />],
     ["layout-footer", <LayoutFooterSection key="layout-footer" />],
   ] as const;
   const visibleSections = sections
@@ -51,8 +47,6 @@ export default async function Home() {
       <main className="flex min-h-screen w-full flex-col gap-12 px-6 py-12 sm:px-10 lg:px-16 lg:max-w-[1600px] lg:mx-auto">
         {visibleSections.map(([, node]) => node)}
       </main>
-
-      {/* lightweight animations defined locally to avoid tailwind config changes */}
       <style>{`
         @keyframes float {
           0% { transform: translateY(0px); }
