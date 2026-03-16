@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Trash2, Pencil } from "lucide-react";
 import { ContactForm } from "./ContactForm";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 export function ContactsTable({ refreshKey = 0 }: { refreshKey?: number }) {
   const [contacts, setContacts] = useState<any[]>([]);
