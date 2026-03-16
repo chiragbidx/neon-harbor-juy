@@ -10,7 +10,7 @@ import { toast } from "sonner";
 const contactInputSchema = z.object({
   name: z.string().min(2, "Name required"),
   email: z.string().email("Invalid email"),
-  tags: z.string().optional(), // Input is always string, split later
+  tags: z.string().optional(), // Field as string for user input
 });
 
 export function ContactForm({
@@ -33,7 +33,7 @@ export function ContactForm({
   const isEdit = !!contact;
 
   async function onSubmit(values: z.infer<typeof contactInputSchema>) {
-    // Always send tags as an array
+    // Converts tags into array for backend
     const payload = {
       ...values,
       tags: values.tags
@@ -43,23 +43,18 @@ export function ContactForm({
             .filter(Boolean)
         : [],
     };
+    const res = await fetch(
+      isEdit ? `/api/contacts/${contact.id}` : "/api/contacts",
+      {
+        method: isEdit ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }
+    );
 
-    const action = isEdit
-      ? fetch(`/api/contacts/${contact.id}`, {
-          method: "PUT",
-          body: JSON.stringify(payload),
-          headers: { "Content-Type": "application/json" },
-        })
-      : fetch("/api/contacts", {
-          method: "POST",
-          body: JSON.stringify(payload),
-          headers: { "Content-Type": "application/json" },
-        });
-
-    const res = await action;
     if (res.ok) {
       onSuccess();
-      form.reset(); // clear after add
+      form.reset();
     } else {
       const err = await res.json().catch(() => ({}));
       toast.error(
