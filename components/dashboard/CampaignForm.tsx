@@ -30,19 +30,15 @@ export function CampaignForm({
   const isEdit = !!campaign;
 
   async function onSubmit(values: z.infer<typeof campaignInputSchema>) {
-    const action = isEdit
-      ? fetch(`/api/campaigns/${campaign.id}`, {
-          method: "PUT",
-          body: JSON.stringify(values),
-          headers: { "Content-Type": "application/json" },
-        })
-      : fetch("/api/campaigns", {
-          method: "POST",
-          body: JSON.stringify(values),
-          headers: { "Content-Type": "application/json" },
-        });
+    const res = await fetch(
+      isEdit ? `/api/campaigns/${campaign.id}` : "/api/campaigns",
+      {
+        method: isEdit ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      }
+    );
 
-    const res = await action;
     if (res.ok) {
       onSuccess();
       form.reset();
