@@ -10,13 +10,13 @@ const contactInputSchema = z.object({
   name: z.string().min(2, "Name required"),
   email: z.string().email("Invalid email"),
   tags: z.array(z.string()).optional(),
+  id: z.string().optional(),
 });
 
 export async function getContacts({ filter = "", tag = "" } = {}) {
   const session = await getAuthSession();
   if (!session?.userId) throw new Error("Not authenticated");
 
-  // Find the teamId for the user
   const result = await db.query.teamMembers.findFirst({
     where: (tm) => eq(tm.userId, session.userId),
     columns: { teamId: true },
@@ -45,31 +45,30 @@ export async function getContacts({ filter = "", tag = "" } = {}) {
   return data;
 }
 
-export async function addContact(formData: FormData) {
+export async function addContact(inputData: any) {
   const session = await getAuthSession();
-  if (!session?.userId) {
-    return { error: "Not authenticated" };
-  }
+  if (!session?.userId) return { error: "Not authenticated" };
   const teamResult = await db.query.teamMembers.findFirst({
     where: (tm) => eq(tm.userId, session.userId),
     columns: { teamId: true },
   });
-  if (!teamResult?.teamId) {
-    return { error: "No team found for user" };
-  }
+  if (!teamResult?.teamId) return { error: "No team found for user" };
 
-  let tagsRaw = formData.get("tags");
+  // Ensure tags is always array
   let tags: string[] = [];
-  if (tagsRaw && typeof tagsRaw === "string" && tagsRaw.length > 0) {
-    tags = tagsRaw.split(",").map((t) => t.trim()).filter(Boolean);
-  } else if (Array.isArray(tagsRaw)) {
-    tags = tagsRaw;
+  if (Array.isArray(inputData.tags)) {
+    tags = inputData.tags.map((t: any) => (typeof t === "string" ? t.trim() : "")).filter(Boolean);
+  } else if (typeof inputData.tags === "string" && inputData.tags.length > 0) {
+    tags = inputData.tags
+      .split(",")
+      .map((t: string) => t.trim())
+      .filter(Boolean);
   }
 
   const input = contactInputSchema.safeParse({
-    name: formData.get("name"),
-    email: formData.get("email"),
-    tags: tags,
+    name: inputData.name,
+    email: inputData.email,
+    tags,
   });
 
   if (!input.success) {
@@ -95,7 +94,7 @@ export async function addContact(formData: FormData) {
   return { success: true };
 }
 
-export async function updateContact(formData: FormData) {
+export async function updateContact(inputData: any) {
   const session = await getAuthSession();
   if (!session?.userId) return { error: "Not authenticated" };
   const teamResult = await db.query.teamMembers.findFirst({
@@ -104,25 +103,30 @@ export async function updateContact(formData: FormData) {
   });
   if (!teamResult?.teamId) return { error: "No team found" };
 
-  const id = formData.get("id");
-  let tagsRaw = formData.get("tags");
+  // Ensure tags is always array
   let tags: string[] = [];
-  if (tagsRaw && typeof tagsRaw === "string" && tagsRaw.length > 0) {
-    tags = tagsRaw.split(",").map((t) => t.trim()).filter(Boolean);
-  } else if (Array.isArray(tagsRaw)) {
-    tags = tagsRaw;
+  if (Array.isArray(inputData.tags)) {
+    tags = inputData.tags.map((t: any) => (typeof t === "string" ? t.trim() : "")).filter(Boolean);
+  } else if (typeof inputData.tags === "string" && inputData.tags.length > 0) {
+    tags = inputData.tags
+      .split(",")
+      .map((t: string) => t.trim())
+      .filter(Boolean);
   }
+  const id = inputData.id;
   const input = contactInputSchema.partial().safeParse({
-    name: formData.get("name"),
-    email: formData.get("email"),
-    tags: tags,
+    name: inputData.name,
+    email: inputData.email,
+    tags,
+    id,
   });
+
   if (!input.success) {
     return { error: input.error.flatten().fieldErrors };
   }
   // Ensure contact belongs to team
   const existing = await db.query.contacts.findFirst({
-    where: (c) => and(eq(c.teamId, teamResult.teamId), eq(c.id, id as string)),
+    where: (c) => and(eq(c.teamId, teamResult.teamId), eq(c.id, id)),
     columns: { id: true },
   });
   if (!existing) return { error: "Contact not found for your team" };
@@ -133,7 +137,7 @@ export async function updateContact(formData: FormData) {
       ...input.data,
       updatedAt: new Date(),
     })
-    .where(and(eq(contacts.id, id as string), eq(contacts.teamId, teamResult.teamId)));
+    .where(and(eq(contacts.id, id), eq(contacts.teamId, teamResult.teamId)));
 
   return { success: true };
 }
