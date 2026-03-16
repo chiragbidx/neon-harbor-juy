@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CampaignForm } from "./CampaignForm";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { PaperPlane, Trash2, Pencil, BarChart } from "lucide-react";
 import Link from "next/link";
 
