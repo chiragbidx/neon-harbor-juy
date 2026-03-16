@@ -18,11 +18,19 @@ export async function GET(req: NextRequest) {
 
 // POST: /api/contacts
 export async function POST(req: NextRequest) {
-  const data = await req.json();
+  let data: any;
+  try {
+    data = await req.json();
+  } catch {
+    data = {};
+  }
   const formData = new FormData();
+  // robust: send tags as JSON if already array, else string->array fallback
   Object.entries(data).forEach(([key, value]) => {
     if (Array.isArray(value)) {
       formData.set(key, value.join(","));
+    } else if (key === "tags" && typeof value === "string") {
+      formData.set(key, value);
     } else {
       formData.set(key, value);
     }
