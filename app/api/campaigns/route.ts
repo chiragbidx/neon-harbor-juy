@@ -24,6 +24,6 @@ export async function POST(req: NextRequest) {
     formData.set(key, value);
   });
   const result = await addCampaign(formData);
-  if (result.success) return NextResponse.json(result);
-  return NextResponse.json({ error: result.error }, { status: 400 });
+  if (result && result.success) return NextResponse.json({ ...result });
+  return NextResponse.json({ error: typeof result?.error === "object" ? { ...result.error } : result.error }, { status: 400 });
 }
