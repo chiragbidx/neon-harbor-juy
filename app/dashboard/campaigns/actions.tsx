@@ -128,4 +128,81 @@ export async function deleteCampaign(id: string) {
   return { success: true };
 }
 
-// (Send/analytics logic unchanged)
+// --- Send Campaign (exported) ---
+async function getRecipientList(teamId: string, recipientTag?: string) {
+  let whereClause = eq(contacts.teamId, teamId);
+  if (recipientTag) {
+    whereClause = and(whereClause, sql`${contacts.tags} ? ${recipientTag}`);
+  }
+  const cnt = await db.query.contacts.findMany({
+    where: whereClause,
+    columns: { id: true, name: true, email: true, tags: true },
+  });
+  return cnt;
+}
+
+export async function sendCampaign(id: string) {
+  const session = await getAuthSession();
+  if (!session?.userId) return { error: "Not authenticated" };
+  const tm = await db.query.teamMembers.findFirst({
+    where: (tm) => eq(tm.userId, session.userId),
+    columns: { teamId: true },
+  });
+  if (!tm?.teamId) return { error: "No team found" };
+
+  const campaign = await db.query.campaigns.findFirst({
+    where: (cmp) => and(eq(cmp.teamId, tm.teamId), eq(cmp.id, id)),
+  });
+
+  if (!campaign) return { error: "Campaign not found" };
+  if (campaign.status === "sent" || campaign.status === "sending") {
+    return { error: "Campaign already sent or in progress" };
+  }
+
+  const recipients = await getRecipientList(tm.teamId, null); // TODO: add tag filter if campaign stores it
+  if (!recipients.length) return { error: "No contacts to send to." };
+
+  if (!process.env.SENDGRID_API_KEY) {
+    return { error: "Sending not configured; contact admin." };
+  }
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+  await db.update(campaigns).set({ status: "sending" }).where(eq(campaigns.id, id));
+
+  let sentCount = 0;
+  try {
+    for (const recipient of recipients) {
+      const msg = {
+        to: recipient.email,
+        from: process.env.SENDGRID_FROM_EMAIL ?? "hi@chirag.co",
+        subject: campaign.subject,
+        html: campaign.body,
+      };
+      try {
+        await sgMail.send(msg);
+        sentCount++;
+        await db.insert(campaignRecipients).values({
+          campaignId: id,
+          contactId: recipient.id,
+          sentAt: new Date(),
+          delivered: true,
+        });
+      } catch (mailError) {
+        await db.insert(campaignRecipients).values({
+          campaignId: id,
+          contactId: recipient.id,
+          sentAt: new Date(),
+          delivered: false,
+        });
+      }
+    }
+    await db.update(campaigns).set({
+      status: "sent",
+      sentAt: new Date(),
+    }).where(eq(campaigns.id, id));
+    return { success: true, sentCount };
+  } catch (e) {
+    await db.update(campaigns).set({ status: "failed" }).where(eq(campaigns.id, id));
+    return { error: "Campaign failed with error", detail: e?.toString?.() ?? "" };
+  }
+}
