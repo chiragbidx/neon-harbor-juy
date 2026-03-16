@@ -12,7 +12,7 @@ export default function CampaignsPage() {
   const [open, setOpen] = useState(false);
   const [refresh, setRefresh] = useState(0);
 
-  function handleSuccess() {
+  function handleAddSuccess() {
     setOpen(false);
     setRefresh((r) => r + 1);
     toast.success("Campaign saved!");
@@ -24,7 +24,7 @@ export default function CampaignsPage() {
         <h1 className="text-3xl font-bold">Campaigns</h1>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button type="button">
               <PlusCircle className="mr-2" /> New Campaign
             </Button>
           </DialogTrigger>
@@ -32,12 +32,12 @@ export default function CampaignsPage() {
             <DialogHeader>
               <DialogTitle>Create Campaign</DialogTitle>
             </DialogHeader>
-            <CampaignForm onSuccess={handleSuccess} />
+            {open && <CampaignForm onSuccess={handleAddSuccess} />}
           </DialogContent>
         </Dialog>
       </div>
       <Suspense fallback={<div>Loading campaigns...</div>}>
-        <CampaignsTable refreshKey={refresh} />
+        <CampaignsTable refreshKey={refresh} onRefresh={() => setRefresh(r => r + 1)} />
       </Suspense>
     </div>
   );
