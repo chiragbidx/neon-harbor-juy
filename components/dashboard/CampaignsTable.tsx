@@ -7,10 +7,10 @@ import { toast } from "sonner";
 import { Send, Trash2, Pencil, BarChart } from "lucide-react";
 import Link from "next/link";
 
-export function CampaignsTable({ refreshKey = 0 }: { refreshKey?: number }) {
+export function CampaignsTable({ refreshKey = 0, onRefresh }: { refreshKey?: number, onRefresh?: () => void }) {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [editingCampaign, setEditingCampaign] = useState<any | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   useEffect(() => {
     async function fetchCampaigns() {
@@ -26,19 +26,21 @@ export function CampaignsTable({ refreshKey = 0 }: { refreshKey?: number }) {
 
   function handleEdit(campaign: any) {
     setEditingCampaign(campaign);
-    setDialogOpen(true);
+    setEditDialogOpen(true);
   }
 
-  function handleSuccess() {
+  function handleEditSuccess() {
     setEditingCampaign(null);
-    setDialogOpen(false);
+    setEditDialogOpen(false);
     toast.success("Campaign updated!");
+    if (onRefresh) onRefresh();
   }
 
   async function handleSend(campaign: any) {
     const res = await fetch(`/api/campaigns/${campaign.id}/send`, { method: "POST" });
     if (res.ok) {
       toast.success("Campaign sent!");
+      if (onRefresh) onRefresh();
     } else {
       toast.error("Send failed.");
     }
@@ -49,6 +51,7 @@ export function CampaignsTable({ refreshKey = 0 }: { refreshKey?: number }) {
     if (res.ok) {
       setCampaigns(campaigns.filter((c) => c.id !== campaign.id));
       toast.success("Deleted successfully!");
+      if (onRefresh) onRefresh();
     } else {
       toast.error("Delete failed.");
     }
@@ -91,16 +94,16 @@ export function CampaignsTable({ refreshKey = 0 }: { refreshKey?: number }) {
                       Analytics
                     </Button>
                   </Link>
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(campaign)}>
+                  <Button variant="outline" size="sm" type="button" onClick={() => handleEdit(campaign)}>
                     <Pencil className="size-4" />
                   </Button>
                   {["draft", "scheduled"].includes(campaign.status) && (
-                    <Button variant="default" size="sm" onClick={() => handleSend(campaign)}>
+                    <Button variant="default" size="sm" type="button" onClick={() => handleSend(campaign)}>
                       <Send className="size-4 mr-1" />
                       Send
                     </Button>
                   )}
-                  <Button variant="destructive" size="sm" onClick={() => handleDelete(campaign)}>
+                  <Button variant="destructive" size="sm" type="button" onClick={() => handleDelete(campaign)}>
                     <Trash2 className="size-4" />
                   </Button>
                 </td>
@@ -115,12 +118,14 @@ export function CampaignsTable({ refreshKey = 0 }: { refreshKey?: number }) {
           )}
         </tbody>
       </table>
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Campaign</DialogTitle>
           </DialogHeader>
-          <CampaignForm campaign={editingCampaign} onSuccess={handleSuccess} />
+          {editDialogOpen && editingCampaign && (
+            <CampaignForm campaign={editingCampaign} onSuccess={handleEditSuccess} />
+          )}
         </DialogContent>
       </Dialog>
     </div>
