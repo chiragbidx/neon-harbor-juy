@@ -8,6 +8,18 @@
       "when": 1773430868554,
       "tag": "0000_minor_crusher_hogan",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773430869999,
+      "tag": "0001_add_contacts_campaigns"
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773430871111,
+      "tag": "0002_add_campaign_recipients"
     }
   ]
 }
