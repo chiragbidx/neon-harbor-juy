@@ -13,7 +13,12 @@ export async function GET() {
 
 // POST: /api/campaigns
 export async function POST(req: NextRequest) {
-  const data = await req.json();
+  let data: any;
+  try {
+    data = await req.json();
+  } catch {
+    data = {};
+  }
   const formData = new FormData();
   Object.entries(data).forEach(([key, value]) => {
     formData.set(key, value);
