@@ -58,10 +58,18 @@ export async function addContact(formData: FormData) {
     return { error: "No team found for user" };
   }
 
+  let tagsRaw = formData.get("tags");
+  let tags: string[] = [];
+  if (tagsRaw && typeof tagsRaw === "string" && tagsRaw.length > 0) {
+    tags = tagsRaw.split(",").map((t) => t.trim()).filter(Boolean);
+  } else if (Array.isArray(tagsRaw)) {
+    tags = tagsRaw;
+  }
+
   const input = contactInputSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
-    tags: (formData.get("tags") as string)?.split(",").filter(Boolean) ?? [],
+    tags: tags,
   });
 
   if (!input.success) {
@@ -97,10 +105,17 @@ export async function updateContact(formData: FormData) {
   if (!teamResult?.teamId) return { error: "No team found" };
 
   const id = formData.get("id");
+  let tagsRaw = formData.get("tags");
+  let tags: string[] = [];
+  if (tagsRaw && typeof tagsRaw === "string" && tagsRaw.length > 0) {
+    tags = tagsRaw.split(",").map((t) => t.trim()).filter(Boolean);
+  } else if (Array.isArray(tagsRaw)) {
+    tags = tagsRaw;
+  }
   const input = contactInputSchema.partial().safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
-    tags: (formData.get("tags") as string)?.split(",").filter(Boolean) ?? [],
+    tags: tags,
   });
   if (!input.success) {
     return { error: input.error.flatten().fieldErrors };
