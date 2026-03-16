@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CampaignForm } from "./CampaignForm";
 import { toast } from "sonner";
-import { PaperPlane, Trash2, Pencil, BarChart } from "lucide-react";
+import { Send, Trash2, Pencil, BarChart } from "lucide-react";
 import Link from "next/link";
 
 export function CampaignsTable({ refreshKey = 0 }: { refreshKey?: number }) {
@@ -96,7 +96,7 @@ export function CampaignsTable({ refreshKey = 0 }: { refreshKey?: number }) {
                   </Button>
                   {["draft", "scheduled"].includes(campaign.status) && (
                     <Button variant="default" size="sm" onClick={() => handleSend(campaign)}>
-                      <PaperPlane className="size-4 mr-1" />
+                      <Send className="size-4 mr-1" />
                       Send
                     </Button>
                   )}
