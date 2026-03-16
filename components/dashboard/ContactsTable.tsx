@@ -6,10 +6,10 @@ import { Trash2, Pencil } from "lucide-react";
 import { ContactForm } from "./ContactForm";
 import { toast } from "sonner";
 
-export function ContactsTable({ refreshKey = 0 }: { refreshKey?: number }) {
+export function ContactsTable({ refreshKey = 0, onRefresh }: { refreshKey?: number, onRefresh?: () => void }) {
   const [contacts, setContacts] = useState<any[]>([]);
   const [editingContact, setEditingContact] = useState<any | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   useEffect(() => {
     async function fetchContacts() {
@@ -25,14 +25,14 @@ export function ContactsTable({ refreshKey = 0 }: { refreshKey?: number }) {
 
   function handleEdit(contact: any) {
     setEditingContact(contact);
-    setDialogOpen(true);
+    setEditDialogOpen(true);
   }
 
-  function handleSuccess() {
+  function handleEditSuccess() {
     setEditingContact(null);
-    setDialogOpen(false);
-    // trigger parent refresh by calling a callback or re-fetching
+    setEditDialogOpen(false);
     toast.success("Contact updated!");
+    if (onRefresh) onRefresh();
   }
 
   return (
@@ -54,18 +54,19 @@ export function ContactsTable({ refreshKey = 0 }: { refreshKey?: number }) {
                 <td className="py-2 px-4">{contact.email}</td>
                 <td className="py-2 px-4">{(contact.tags || []).join(", ")}</td>
                 <td className="py-2 px-4 space-x-2 flex justify-center">
-                  <Button variant="outline" size="sm" onClick={() => handleEdit(contact)}>
+                  <Button variant="outline" size="sm" onClick={() => handleEdit(contact)} type="button">
                     <Pencil className="size-4" />
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
+                    type="button"
                     onClick={async () => {
-                      // Optimistic UI; actual deletion via API/Action
                       const res = await fetch(`/api/contacts/${contact.id}`, { method: "DELETE" });
                       if (res.ok) {
                         toast.success("Contact deleted");
                         setContacts(contacts.filter((c) => c.id !== contact.id));
+                        if (onRefresh) onRefresh();
                       } else {
                         toast.error("Deletion failed");
                       }
@@ -81,12 +82,14 @@ export function ContactsTable({ refreshKey = 0 }: { refreshKey?: number }) {
           )}
         </tbody>
       </table>
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Contact</DialogTitle>
           </DialogHeader>
-          <ContactForm contact={editingContact} onSuccess={handleSuccess} />
+          {editDialogOpen && editingContact && (
+            <ContactForm contact={editingContact} onSuccess={handleEditSuccess} />
+          )}
         </DialogContent>
       </Dialog>
     </div>
