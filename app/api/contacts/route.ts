@@ -25,7 +25,6 @@ export async function POST(req: NextRequest) {
     data = {};
   }
   const formData = new FormData();
-  // robust: send tags as JSON if already array, else string->array fallback
   Object.entries(data).forEach(([key, value]) => {
     if (Array.isArray(value)) {
       formData.set(key, value.join(","));
@@ -36,6 +35,7 @@ export async function POST(req: NextRequest) {
     }
   });
   const result = await addContact(formData);
-  if (result.success) return NextResponse.json(result);
-  return NextResponse.json({ error: result.error }, { status: 400 });
+  // Always spread result to produce a plain new object for response
+  if (result && result.success) return NextResponse.json({ ...result });
+  return NextResponse.json({ error: typeof result?.error === "object" ? { ...result.error } : result.error }, { status: 400 });
 }
