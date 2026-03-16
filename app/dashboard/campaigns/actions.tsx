@@ -20,7 +20,7 @@ const campaignInputSchema = z.object({
   name: z.string().min(2, "Campaign name is required"),
   subject: z.string().min(2, "Subject is required"),
   body: z.string().min(2, "Body is required"),
-  recipientTag: z.string().optional(), // send to all if blank, or contacts with this tag
+  recipientTag: z.string().optional(),
   scheduledAt: z.string().optional(),
 });
 
@@ -56,12 +56,19 @@ export async function addCampaign(formData: FormData) {
   });
   if (!tm?.teamId) return { error: "No team found for user" };
 
+  // Accept FormData or object payload
+  let name = formData.get("name");
+  let subject = formData.get("subject");
+  let body = formData.get("body");
+  let recipientTag = formData.get("recipientTag");
+  let scheduledAt = formData.get("scheduledAt");
+
   const input = campaignInputSchema.safeParse({
-    name: formData.get("name"),
-    subject: formData.get("subject"),
-    body: formData.get("body"),
-    recipientTag: formData.get("recipientTag"),
-    scheduledAt: formData.get("scheduledAt"),
+    name,
+    subject,
+    body,
+    recipientTag,
+    scheduledAt,
   });
 
   if (!input.success) {
@@ -93,12 +100,17 @@ export async function updateCampaign(formData: FormData) {
   if (!tm?.teamId) return { error: "No team found" };
 
   const id = formData.get("id");
+  let name = formData.get("name");
+  let subject = formData.get("subject");
+  let body = formData.get("body");
+  let recipientTag = formData.get("recipientTag");
+  let scheduledAt = formData.get("scheduledAt");
   const input = campaignInputSchema.partial().safeParse({
-    name: formData.get("name"),
-    subject: formData.get("subject"),
-    body: formData.get("body"),
-    recipientTag: formData.get("recipientTag"),
-    scheduledAt: formData.get("scheduledAt"),
+    name,
+    subject,
+    body,
+    recipientTag,
+    scheduledAt,
   });
 
   if (!input.success) {
