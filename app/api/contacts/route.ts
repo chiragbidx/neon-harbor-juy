@@ -3,7 +3,6 @@ import { getContacts, addContact } from "@/app/dashboard/contacts/actions";
 
 // GET: /api/contacts
 export async function GET(req: NextRequest) {
-  // Support filtering by ?filter=name&tag=tag1
   const { searchParams } = req.nextUrl;
   const filter = searchParams.get("filter") ?? "";
   const tag = searchParams.get("tag") ?? "";
@@ -35,7 +34,20 @@ export async function POST(req: NextRequest) {
     }
   });
   const result = await addContact(formData);
-  // Always spread result to produce a plain new object for response
-  if (result && result.success) return NextResponse.json({ ...result });
-  return NextResponse.json({ error: typeof result?.error === "object" ? { ...result.error } : result.error }, { status: 400 });
+  // Only send plain primitives/arrays via new response objects
+  if (result && result.success) {
+    return NextResponse.json({ success: true });
+  } else if (result && result.error) {
+    if (
+      typeof result.error === "string" ||
+      Array.isArray(result.error)
+    ) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+    // If error is an object, shallow clone its contents
+    return NextResponse.json({ error: { ...result.error } }, { status: 400 });
+  } else {
+    // fallback: generic error
+    return NextResponse.json({ error: "Unknown error" }, { status: 400 });
+  }
 }
