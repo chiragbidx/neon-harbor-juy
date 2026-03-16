@@ -10,7 +10,7 @@ import { toast } from "sonner";
 const contactInputSchema = z.object({
   name: z.string().min(2, "Name required"),
   email: z.string().email("Invalid email"),
-  tags: z.string().optional(),
+  tags: z.string().optional(), // Input is always string, split later
 });
 
 export function ContactForm({
@@ -22,29 +22,52 @@ export function ContactForm({
 }) {
   const form = useForm<z.infer<typeof contactInputSchema>>({
     resolver: zodResolver(contactInputSchema),
-    defaultValues: contact || { name: "", email: "", tags: "" },
+    defaultValues: contact
+      ? {
+          ...contact,
+          tags: Array.isArray(contact.tags) ? contact.tags.join(", ") : contact.tags || "",
+        }
+      : { name: "", email: "", tags: "" },
   });
 
   const isEdit = !!contact;
 
   async function onSubmit(values: z.infer<typeof contactInputSchema>) {
+    // Always send tags as an array
+    const payload = {
+      ...values,
+      tags: values.tags
+        ? values.tags
+            .split(",")
+            .map(t => t.trim())
+            .filter(Boolean)
+        : [],
+    };
+
     const action = isEdit
       ? fetch(`/api/contacts/${contact.id}`, {
           method: "PUT",
-          body: JSON.stringify(values),
+          body: JSON.stringify(payload),
           headers: { "Content-Type": "application/json" },
         })
       : fetch("/api/contacts", {
           method: "POST",
-          body: JSON.stringify(values),
+          body: JSON.stringify(payload),
           headers: { "Content-Type": "application/json" },
         });
 
     const res = await action;
     if (res.ok) {
       onSuccess();
+      form.reset(); // clear after add
     } else {
-      toast.error("Error saving contact");
+      const err = await res.json().catch(() => ({}));
+      toast.error(
+        err?.error?.email?.[0] ||
+          err?.error?.name?.[0] ||
+          err?.error?.message ||
+          "Error saving contact"
+      );
     }
   }
 
