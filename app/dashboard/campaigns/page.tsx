@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PlusCircle } from "lucide-react";
 import { CampaignForm } from "@/components/dashboard/CampaignForm";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 export default function CampaignsPage() {
   const [open, setOpen] = useState(false);
